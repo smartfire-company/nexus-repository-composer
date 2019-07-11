@@ -53,6 +53,11 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Collections.singletonMap;
 import static org.sonatype.nexus.repository.composer.internal.ComposerPathUtils.buildPackagePath;
 
+import java.util.logging.ConsoleHandler;
+import java.util.logging.Handler;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 /**
  * Class encapsulating JSON processing for Composer-format repositories, including operations for parsing JSON indexes
  * and rewriting them to be compatible with a proxy repository.
@@ -135,6 +140,8 @@ public class ComposerJsonProcessor
 
   private static final String ZIP_TYPE = "zip";
 
+  private static final String TAR_TYPE = "tar";
+
   private static final ObjectMapper mapper = new ObjectMapper();
 
   private static final DateTimeFormatter timeFormatter = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ssZZ");
@@ -192,13 +199,18 @@ public class ComposerJsonProcessor
         for (String packageVersion : packageVersions.keySet()) {
           // TODO: Make this more robust, right now it makes a lot of assumptions and doesn't deal with bad things well
           Map<String, Object> versionInfo = (Map<String, Object>) packageVersions.get(packageVersion);
-          versionInfo.remove(SOURCE_KEY); // TODO: For now don't allow sources, probably should make this configurable?
+          //versionInfo.remove(SOURCE_KEY); // TODO: For now don't allow sources, probably should make this configurable?
 
           Map<String, Object> distInfo = (Map<String, Object>) versionInfo.get(DIST_KEY);
           if (distInfo != null && ZIP_TYPE.equals(distInfo.get(TYPE_KEY))) {
             versionInfo.put(DIST_KEY,
                 buildDistInfo(repository, packageName, packageVersion, (String) distInfo.get(REFERENCE_KEY),
                     (String) distInfo.get(SHASUM_KEY), ZIP_TYPE));
+          }
+          if (distInfo != null && TAR_TYPE.equals(distInfo.get(TYPE_KEY))) {
+            versionInfo.put(DIST_KEY,
+                buildDistInfo(repository, packageName, packageVersion, (String) distInfo.get(REFERENCE_KEY),
+                    (String) distInfo.get(SHASUM_KEY), TAR_TYPE));
           }
         }
       }
@@ -409,6 +421,11 @@ public class ComposerJsonProcessor
     newDistInfo.put(TYPE_KEY, type);
     newDistInfo.put(REFERENCE_KEY, reference);
     newDistInfo.put(SHASUM_KEY, shasum);
+
+    Logger logger = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
+    logger.setLevel(Level.ALL);
+    logger.warning("newDistUrl: " + repository.getUrl() + "/" + buildPackagePath(packageVendor, packageProject, packageVersion, null, type));
+
     return newDistInfo;
   }
 

@@ -1,7 +1,7 @@
-ARG NEXUS_VERSION=3.13.0
+ARG NEXUS_VERSION=3.17.0
 
 FROM maven:3-jdk-8-alpine AS build
-ARG NEXUS_VERSION=3.13.0
+ARG NEXUS_VERSION=3.17.0
 ARG NEXUS_BUILD=01
 
 COPY . /nexus-repository-composer/
@@ -9,7 +9,7 @@ RUN cd /nexus-repository-composer/; sed -i "s/3.13.0-01/${NEXUS_VERSION}-${NEXUS
     mvn clean package;
 
 FROM sonatype/nexus3:$NEXUS_VERSION
-ARG NEXUS_VERSION=3.13.0
+ARG NEXUS_VERSION=3.17.0
 ARG NEXUS_BUILD=01
 ARG COMPOSER_VERSION=0.0.2
 ARG TARGET_DIR=/opt/sonatype/nexus/system/org/sonatype/nexus/plugins/nexus-repository-composer/${COMPOSER_VERSION}/
